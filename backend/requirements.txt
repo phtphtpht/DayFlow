@@ -1,0 +1,10 @@
+fastapi
+uvicorn[standard]
+sqlalchemy
+mss
+pynput
+python-dotenv
+openai
+Pillow
+pygetwindow
+pyobjc-framework-Quartz

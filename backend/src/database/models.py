@@ -39,7 +39,7 @@ class Activity(Base):
 
     # AI 分析结果
     category = Column(String(100), nullable=True, comment="工作类型分类")
-    description = Column(String(1000), nullable=True, comment="活动描述")
+    description = Column(Text, nullable=True, comment="活动详细描述")
     confidence = Column(Integer, nullable=True, comment="AI分析置信度 0-100")
     analyzed = Column(Boolean, default=False, nullable=False, comment="是否已AI分析")
 

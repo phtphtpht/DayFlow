@@ -56,16 +56,16 @@ def get_summary_prompt(lang: str, target_date, weekday_name: str, work_hours: fl
     """
 
     if lang == 'zh':
-        system_msg = "你是一个专业的工作日志撰写助手，擅长将零散的工作记录整合成连贯、有价值的工作总结。只输出工作日志内容，不要添加其他格式。"
-        prompt = f"""请根据以下工作记录，生成一份专业的每日工作日志。
+        system_msg = "你是一个专业的活动记录分析助手，擅长将零散的活动记录整合成连贯、有价值的每日总结。只输出总结内容，不要添加其他格式。"
+        prompt = f"""请根据以下活动记录，生成一份清晰的每日总结。
 
 **日期：** {target_date.strftime('%Y年%m月%d日')} {weekday_name}
 
-**工作统计：**
-- 有效工作时长：约 {work_hours:.1f} 小时（{record_count} 条记录）
-- 工作类型分布：
+**活动统计：**
+- 活跃时长：约 {work_hours:.1f} 小时（{record_count} 条记录）
+- 活动类型分布：
 {category_breakdown}
-- 使用的主要工具：{main_tools}
+- 主要使用的工具：{main_tools}
 
 **时段活动详情：**
 
@@ -81,40 +81,41 @@ def get_summary_prompt(lang: str, target_date, weekday_name: str, work_hours: fl
 **生成要求：**
 1. 用叙事性的中文写作，字数在 250-350 字之间
 2. 按时间段组织内容（上午、下午、晚上）
-3. 整合相关的工作活动，不要逐条罗列，而要形成连贯的叙述
-4. 突出主要工作内容和具体成果，提及关键的工具和技术
-5. 如果有明显的专注时段或任务切换，要特别指出
-6. 语气专业但友好，就像向同事或上级汇报一天的工作
-7. 避免流水账式的描述，要提炼出工作的重点和亮点
+3. 整合相关的活动，不要逐条罗列，而要形成连贯的叙述
+4. 突出主要内容和具体成果，提及关键的工具和技术
+5. 如果有明显的专注时段或活动切换，要特别指出
+6. 语气自然友好，就像给自己写一份简明的每日回顾
+7. 避免流水账式的描述，要提炼出重点和亮点
 
 **输出格式示例：**
-今天的工作主要集中在 [项目/领域]。上午 [时段] 主要处理 [具体任务]，使用 [工具] 完成了 [成果]。期间查阅了 [资料/文档] 以解决 [问题]。
+今天主要在 [项目/学习/创作等]。上午 [时段] 主要在 [具体内容]，使用 [工具] 完成了 [成果]。期间查阅了 [资料/文档] 来解决 [问题]。
 
-下午工作重心转向 [另一任务]，在 [具体操作] 方面取得了 [进展]。
+下午重心转向 [另一活动]，在 [具体操作] 方面有所进展。
 
-整体来看，今天在 [总结性描述] 方面进展顺利。
+整体来看，今天在 [总结性描述] 方面进展顺利/收获不少。
 
 **注意：**
 - 不要简单列举"使用了VSCode"这样的表述
 - 要说明在工具中做了什么、达成了什么
 - 相关活动要整合，如"编程"+"查文档"+"测试" = "开发某功能"
-- 直接输出日志内容，不要添加标题或其他格式
+- 如果包含学习、娱乐等非工作活动，自然地描述即可，不要刻意回避
+- 直接输出总结内容，不要添加标题或其他格式
 
-现在请生成工作日志：
+现在请生成每日总结：
 """
         return prompt, system_msg
 
     elif lang == 'en':
-        system_msg = "You are a professional work log writer who excels at integrating scattered work records into coherent and valuable work summaries. Only output the work log content without any additional formatting."
-        prompt = f"""Please generate a professional daily work log based on the following work records.
+        system_msg = "You are a professional activity analysis assistant, skilled at integrating scattered activity records into coherent and valuable daily summaries. Only output the summary content without additional formatting."
+        prompt = f"""Please generate a clear daily summary based on the following activity records.
 
-**Date:** {target_date.strftime('%Y-%m-%d')} {weekday_name}
+**Date:** {target_date.strftime('%B %d, %Y')} ({weekday_name})
 
-**Work Statistics:**
-- Effective work duration: approximately {work_hours:.1f} hours ({record_count} records)
-- Work type distribution:
+**Activity Statistics:**
+- Active Duration: approximately {work_hours:.1f} hours ({record_count} records)
+- Activity Type Distribution:
 {category_breakdown}
-- Main tools used: {main_tools}
+- Main Tools Used: {main_tools}
 
 **Activity Details by Time Period:**
 
@@ -130,40 +131,41 @@ Evening (18:00-24:00):
 **Generation Requirements:**
 1. Write in narrative English, 250-350 words
 2. Organize content by time periods (morning, afternoon, evening)
-3. Integrate related work activities into a coherent narrative, rather than listing them one by one
-4. Highlight main work content and concrete achievements, mentioning key tools and technologies
-5. Point out any obvious periods of focus or task switching
-6. Use a professional but friendly tone, as if reporting the day's work to colleagues or supervisors
-7. Avoid itemized descriptions; extract key points and highlights
+3. Integrate related activities into coherent narrative, not just listing
+4. Highlight main content and specific achievements, mention key tools and techniques
+5. Point out focused periods or activity transitions if notable
+6. Natural and friendly tone, like writing a brief daily review for yourself
+7. Avoid trivial details, extract key points and highlights
 
 **Output Format Example:**
-Today's work mainly focused on [project/area]. In the morning [time period], I primarily handled [specific task], using [tool] to complete [achievement]. During this time, I consulted [resources/documents] to solve [problem].
+Today mainly focused on [project/learning/creation]. In the morning [period], primarily worked on [specific content], using [tools] to complete [achievements]. Referenced [materials/docs] to solve [problems].
 
-In the afternoon, the focus shifted to [another task], making [progress] in [specific operations].
+In the afternoon, focus shifted to [another activity], making progress in [specific operations].
 
-Overall, today made good progress in [summary description].
+Overall, today made good progress/gained valuable experience in [summary].
 
 **Notes:**
-- Don't simply list things like "used VSCode"
-- Explain what was done in the tool and what was achieved
-- Related activities should be integrated, e.g., "coding" + "checking docs" + "testing" = "developing a feature"
-- Output the log content directly without adding titles or other formatting
+- Don't just list "used VSCode"
+- Explain what was done with the tools and what was achieved
+- Integrate related activities, e.g., "coding"+"checking docs"+"testing" = "developing a feature"
+- If including learning, entertainment, or non-work activities, describe them naturally without avoiding
+- Output summary content directly without adding titles or other formatting
 
-Now please generate the work log:
+Now please generate the daily summary:
 """
         return prompt, system_msg
 
     elif lang == 'ja':
-        system_msg = "あなたはプロの作業ログ作成アシスタントで、断片的な作業記録をまとまりのある価値のある作業サマリーに統合することが得意です。作業ログの内容のみを出力し、他のフォーマットは追加しないでください。"
-        prompt = f"""以下の作業記録に基づいて、プロフェッショナルな毎日の作業ログを生成してください。
+        system_msg = "あなたはプロの活動記録分析アシスタントで、散在する活動記録を首尾一貫した価値のある日次サマリーに統合することに長けています。サマリーの内容のみを出力し、他の書式は追加しないでください。"
+        prompt = f"""以下の活動記録に基づいて、明確な日次サマリーを作成してください。
 
-**日付：** {target_date.strftime('%Y年%m月%d日')} {weekday_name}
+**日付：** {target_date.strftime('%Y年%m月%d日')} ({weekday_name})
 
-**作業統計：**
-- 有効作業時間：約 {work_hours:.1f} 時間（{record_count} 件の記録）
-- 作業タイプの分布：
+**活動統計：**
+- アクティブ時間：約{work_hours:.1f}時間（{record_count}件の記録）
+- 活動タイプの分布：
 {category_breakdown}
-- 主に使用したツール：{main_tools}
+- 主な使用ツール：{main_tools}
 
 **時間帯別の活動詳細：**
 
@@ -177,28 +179,29 @@ Now please generate the work log:
 {evening_activities}
 
 **生成要件：**
-1. 物語調の日本語で書き、250～350文字程度
-2. 時間帯ごとに内容を整理（午前、午後、夜間）
-3. 関連する作業活動を統合し、一つずつ列挙するのではなく、まとまりのある叙述を形成する
-4. 主な作業内容と具体的な成果を強調し、重要なツールや技術について言及する
-5. 明らかな集中時間帯やタスクの切り替えがあれば、特に指摘する
-6. プロフェッショナルだが親しみやすい口調で、同僚や上司に一日の作業を報告するように
-7. 箇条書き的な説明を避け、作業のポイントとハイライトを抽出する
+1. 日本語で叙述的に、250-350文字で記述
+2. 時間帯別に内容を整理（午前、午後、夜間）
+3. 関連する活動を統合し、リスト形式ではなく一貫したナラティブに
+4. 主な内容と具体的な成果を強調し、重要なツールや技術に言及
+5. 集中期間や活動の切り替えがあれば特に指摘
+6. 自然で親しみやすい口調で、自分用の簡潔な日次レビューを書くように
+7. 細かい詳細を避け、要点とハイライトを抽出
 
-**出力形式の例：**
-今日の作業は主に[プロジェクト/分野]に集中しました。午前[時間帯]は主に[具体的なタスク]を処理し、[ツール]を使用して[成果]を完成させました。その間、[問題]を解決するために[資料/ドキュメント]を参照しました。
+**出力形式例：**
+今日は主に[プロジェクト/学習/創作]に取り組みました。午前中は[具体的な内容]に取り組み、[ツール]を使用して[成果]を完成させました。[問題]を解決するために[資料/ドキュメント]を参照しました。
 
-午後は作業の重点が[別のタスク]に移り、[具体的な操作]において[進展]を遂げました。
+午後は[別の活動]に重点を移し、[具体的な操作]で進展がありました。
 
-全体的に見て、今日は[要約的な説明]において順調に進展しました。
+全体的に、今日は[要約的な説明]において順調に進展/良い収穫がありました。
 
 **注意：**
-- 単に「VSCodeを使った」のような表現を列挙しないでください
-- ツールで何をしたか、何を達成したかを説明してください
-- 関連する活動を統合してください。例：「コーディング」+「ドキュメント確認」+「テスト」=「機能の開発」
-- ログの内容を直接出力し、タイトルや他のフォーマットを追加しないでください
+- 「VSCodeを使用した」のような単純な列挙を避ける
+- ツールで何をしたか、何を達成したかを説明する
+- 関連する活動を統合（「コーディング」+「ドキュメント確認」+「テスト」=「機能開発」）
+- 学習、娯楽などの非作業活動が含まれる場合は、自然に記述し、回避しない
+- サマリー内容を直接出力し、タイトルや他の書式を追加しない
 
-それでは作業ログを生成してください：
+それでは、日次サマリーを生成してください：
 """
         return prompt, system_msg
 

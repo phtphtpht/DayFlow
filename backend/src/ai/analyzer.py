@@ -16,6 +16,7 @@ from dotenv import load_dotenv
 
 from ..database.db import SessionLocal, get_recent_context
 from ..database.models import Activity
+from ..utils.config import get_config
 
 # 加载环境变量
 load_dotenv()
@@ -57,60 +58,21 @@ def _get_text_from_responses(resp) -> str:
         return ""
 
 
-def analyze_screenshot(activity_id: int) -> Dict:
+def get_analysis_prompt(lang: str, activity, recent_context: str) -> str:
     """
-    分析指定活动记录的截图
+    根据语言返回对应的分析prompt
 
     Args:
-        activity_id: 活动记录的 ID
+        lang: 语言代码 ('zh', 'en', 'ja')
+        activity: Activity 对象
+        recent_context: 最近的工作上下文
 
     Returns:
-        Dict: 分析结果字典
-            {
-                "category": str,
-                "description": str,
-                "confidence": int
-            }
-
-    Raises:
-        FileNotFoundError: 截图文件不存在
-        Exception: 其他错误
+        str: 对应语言的 prompt
     """
-    session = SessionLocal()
-
-    try:
-        logger.info(f"开始分析活动记录 ID: {activity_id}")
-
-        # a. 从数据库获取当前 Activity 记录
-        activity = session.query(Activity).filter(Activity.id == activity_id).first()
-
-        if not activity:
-            raise ValueError(f"未找到 ID 为 {activity_id} 的活动记录")
-
-        # 检查截图文件是否存在
-        screenshot_path = activity.screenshot_path
-        if not Path(screenshot_path).exists():
-            # 文件不存在，标记为已分析并跳过
-            logger.warning(f"截图文件不存在，跳过分析: {screenshot_path}")
-            activity.analyzed = True
-            activity.category = "other"
-            activity.description = "截图文件已丢失，无法分析"
-            activity.confidence = 0
-            session.commit()
-            raise FileNotFoundError(f"截图文件不存在: {screenshot_path}")
-
-        # b. 获取历史上下文
-        recent_context = get_recent_context(activity_id, count=5)
-        logger.debug(f"历史上下文: {recent_context[:100] if recent_context else '无'}")
-
-        # c. 读取截图文件并转为 base64
-        with open(screenshot_path, 'rb') as f:
-            image_data = base64.b64encode(f.read()).decode('utf-8')
-
-        logger.debug(f"截图已编码，大小: {len(image_data)} 字符")
-
-        # d. 构建详细的 prompt
-        prompt = f"""你是一个专业的工作活动分析助手。请**深入分析**这张多屏幕截图，详细识别用户正在进行的工作。
+    if lang == 'zh':
+        # 中文 prompt（保持现有内容）
+        return f"""你是一个专业的工作活动分析助手。请**深入分析**这张多屏幕截图，详细识别用户正在进行的工作。
 
 **重要提示：这是多屏幕截图**
 - 图片包含用户的所有显示器内容
@@ -197,6 +159,151 @@ def analyze_screenshot(activity_id: int) -> Dict:
 只返回JSON，不要任何其他文字。
 """
 
+    elif lang == 'en':
+        # 英文 prompt
+        return f"""You are a professional work activity analyzer. Please analyze this multi-screen screenshot in detail and identify what the user is working on.
+
+**Important: This is a Multi-Screen Screenshot**
+- The image contains all of the user's monitor contents
+- Currently active window: {activity.app_name}
+- Please analyze **all screens** comprehensively
+
+**Recent Work Context (Past 50 minutes):**
+{recent_context if recent_context else "No history (this is the first record today)"}
+
+**Current Information:**
+- Active Application: {activity.app_name}
+- Window Title: {activity.window_title}
+- Time: {activity.timestamp.strftime('%H:%M')}
+
+**Analysis Requirements:**
+- Length: 50-80 words in English
+- Be specific and detailed
+- Mention tools, content, and context
+
+**Category Standards:**
+- **coding**: Writing code, debugging, using IDE, terminal operations
+- **writing**: Writing documents, emails, articles, notes
+- **meeting**: Video conferencing, online meetings
+- **browsing**: Web browsing, researching, reading docs
+- **communication**: Chat tools, emails, AI assistant conversations
+- **design**: Design tools, UI/UX design
+- **data_analysis**: Data tables, charts, analysis tools
+- **entertainment**: Social media, videos, games, shopping
+- **other**: Other activities
+
+**Return Format (valid JSON):**
+{{
+  "category": "choose one category",
+  "description": "Detailed English description, 50-80 words, explain what, how, and which tools",
+  "confidence": 85
+}}
+
+Return only JSON, no other text.
+"""
+
+    elif lang == 'ja':
+        # 日文 prompt
+        return f"""あなたはプロの作業活動分析アシスタントです。このマルチスクリーンのスクリーンショットを詳しく分析してください。
+
+**重要：マルチスクリーンのスクリーンショット**
+- ユーザーのすべてのモニターの内容が含まれています
+- アクティブウィンドウ：{activity.app_name}
+- **すべての画面**を総合的に分析してください
+
+**最近の作業コンテキスト（過去50分間）：**
+{recent_context if recent_context else "履歴なし（今日の最初の記録）"}
+
+**現在の情報：**
+- アクティブアプリ: {activity.app_name}
+- ウィンドウタイトル: {activity.window_title}
+- 時刻: {activity.timestamp.strftime('%H:%M')}
+
+**分析要件：**
+- 長さ：50-80文字（日本語）
+- 具体的で詳細に
+- ツール、内容、状況を含める
+
+**カテゴリー：**
+- **coding**: コード作成、デバッグ、IDE使用
+- **writing**: ドキュメント作成、メール、記事
+- **meeting**: ビデオ会議
+- **browsing**: ウェブブラウジング、資料閲覧
+- **communication**: チャット、メール、AI対話
+- **other**: その他
+
+**返信形式（有効なJSON）：**
+{{
+  "category": "カテゴリーを1つ選択",
+  "description": "日本語での詳細説明、50-80文字",
+  "confidence": 85
+}}
+
+JSONのみ返してください。
+"""
+
+    else:
+        # 默认中文
+        return get_analysis_prompt('zh', activity, recent_context)
+
+
+def analyze_screenshot(activity_id: int) -> Dict:
+    """
+    分析指定活动记录的截图
+
+    Args:
+        activity_id: 活动记录的 ID
+
+    Returns:
+        Dict: 分析结果字典
+            {
+                "category": str,
+                "description": str,
+                "confidence": int
+            }
+
+    Raises:
+        FileNotFoundError: 截图文件不存在
+        Exception: 其他错误
+    """
+    session = SessionLocal()
+
+    try:
+        logger.info(f"开始分析活动记录 ID: {activity_id}")
+
+        # a. 从数据库获取当前 Activity 记录
+        activity = session.query(Activity).filter(Activity.id == activity_id).first()
+
+        if not activity:
+            raise ValueError(f"未找到 ID 为 {activity_id} 的活动记录")
+
+        # 检查截图文件是否存在
+        screenshot_path = activity.screenshot_path
+        if not Path(screenshot_path).exists():
+            # 文件不存在，标记为已分析并跳过
+            logger.warning(f"截图文件不存在，跳过分析: {screenshot_path}")
+            activity.analyzed = True
+            activity.category = "other"
+            activity.description = "截图文件已丢失，无法分析"
+            activity.confidence = 0
+            session.commit()
+            raise FileNotFoundError(f"截图文件不存在: {screenshot_path}")
+
+        # b. 获取历史上下文
+        recent_context = get_recent_context(activity_id, count=5)
+        logger.debug(f"历史上下文: {recent_context[:100] if recent_context else '无'}")
+
+        # c. 读取截图文件并转为 base64
+        with open(screenshot_path, 'rb') as f:
+            image_data = base64.b64encode(f.read()).decode('utf-8')
+
+        logger.debug(f"截图已编码，大小: {len(image_data)} 字符")
+
+        # d. 获取用户语言设置并构建对应语言的 prompt
+        config = get_config()
+        user_lang = config.get('language', 'zh')
+        prompt = get_analysis_prompt(user_lang, activity, recent_context)
+
         # e. 调用 OpenAI API
         logger.info("调用 OpenAI API 进行分析...")
 
@@ -211,9 +318,8 @@ def analyze_screenshot(activity_id: int) -> Dict:
                     {"type": "input_text", "text": prompt},
                     {"type": "input_image", "image_url": f"data:image/png;base64,{image_data}"}
                 ]}
-            ],
-            max_output_tokens=2000,  # 增加到 2000，给 reasoning 和 output 足够空间
-            # 不要传 temperature/top_p；不少新模型不支持
+            ]
+            # 不传 max_output_tokens，使用模型默认值
         )
 
         # f. 解析返回的 JSON（Responses API 提供 output_text）

@@ -5,7 +5,7 @@ FastAPI Web API 服务
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Optional, List
 from pydantic import BaseModel
 import sys
@@ -39,6 +39,47 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+# ============ 辅助函数 ============
+
+def calculate_work_hours(activities: List) -> float:
+    """
+    根据活动记录的时间戳计算实际工作时长
+
+    规则：
+    - 按时间排序所有活动
+    - 计算相邻活动的时间差
+    - 如果时间差 <= 15分钟，累计工作时间
+    - 如果时间差 > 15分钟，视为中断，不累计
+
+    Args:
+        activities: 活动记录列表
+
+    Returns:
+        float: 工作时长（小时）
+    """
+    if not activities:
+        return 0.0
+
+    # 按时间戳排序
+    sorted_activities = sorted(activities, key=lambda a: a.timestamp)
+
+    total_minutes = 0.0
+
+    for i in range(len(sorted_activities) - 1):
+        current = sorted_activities[i]
+        next_activity = sorted_activities[i + 1]
+
+        # 计算时间差（分钟）
+        time_diff = (next_activity.timestamp - current.timestamp).total_seconds() / 60
+
+        # 如果间隔 <= 15分钟，累计这段时间
+        if time_diff <= 15:
+            total_minutes += time_diff
+
+    # 转换为小时，保留1位小数
+    return round(total_minutes / 60, 1)
 
 
 # ============ 响应模型 ============
@@ -246,10 +287,52 @@ def get_today_stats():
         cat = a.category or 'other'
         category_dist[cat] = category_dist.get(cat, 0) + 1
 
+    # 使用新的工作时长计算方法
+    work_hours = calculate_work_hours(activities)
+
     return StatsResponse(
         total_records=len(activities),
         analyzed_records=len(analyzed),
-        work_hours=round(len(activities) * 10 / 60, 1),
+        work_hours=work_hours,
+        category_distribution=category_dist
+    )
+
+
+@app.get("/api/stats", response_model=StatsResponse)
+def get_stats(date: Optional[str] = None):
+    """
+    获取指定日期的统计数据
+
+    参数:
+        date: 日期字符串，格式 YYYY-MM-DD，不传则返回今天
+    """
+    if date:
+        try:
+            target_date = datetime.strptime(date, "%Y-%m-%d").date()
+        except ValueError:
+            raise HTTPException(
+                status_code=400,
+                detail="日期格式错误，请使用 YYYY-MM-DD 格式"
+            )
+    else:
+        target_date = datetime.now().date()
+
+    activities = get_activities_by_date(target_date)
+    analyzed = [a for a in activities if a.analyzed]
+
+    # 计算类别分布
+    category_dist = {}
+    for a in analyzed:
+        cat = a.category or 'other'
+        category_dist[cat] = category_dist.get(cat, 0) + 1
+
+    # 使用新的工作时长计算方法
+    work_hours = calculate_work_hours(activities)
+
+    return StatsResponse(
+        total_records=len(activities),
+        analyzed_records=len(analyzed),
+        work_hours=work_hours,
         category_distribution=category_dist
     )
 

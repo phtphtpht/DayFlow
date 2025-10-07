@@ -5,8 +5,10 @@
 
 import { useState, useEffect } from 'react';
 import api from '../services/api';
+import { useLanguage } from '../contexts/LanguageContext';
 
 export default function Timeline() {
+  const { t } = useLanguage();
   const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -33,7 +35,7 @@ export default function Timeline() {
       const data = await api.getActivities(selectedDate);
       setActivities(data);
     } catch (err) {
-      setError('加载活动失败');
+      setError(t('timeline.loadFailed'));
       console.error(err);
     } finally {
       setLoading(false);
@@ -77,7 +79,7 @@ export default function Timeline() {
       <div className="flex items-center justify-center h-screen">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          <p className="text-gray-600">加载中...</p>
+          <p className="text-gray-600">{t('timeline.loading')}</p>
         </div>
       </div>
     );
@@ -87,12 +89,12 @@ export default function Timeline() {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md">
-          <p className="text-red-600">❌ {error}</p>
+          <p className="text-red-600">{error}</p>
           <button
             onClick={loadActivities}
             className="mt-4 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
           >
-            重试
+            {t('timeline.retry')}
           </button>
         </div>
       </div>
@@ -104,7 +106,7 @@ export default function Timeline() {
       <div className="max-w-4xl mx-auto">
         {/* 日期选择器 */}
         <div className="mb-6 flex items-center gap-4">
-          <label className="text-gray-700 font-medium">选择日期：</label>
+          <label className="text-gray-700 font-medium">{t('timeline.selectDate')}</label>
           <input
             type="date"
             value={selectedDate}
@@ -113,10 +115,11 @@ export default function Timeline() {
             className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           <p className="text-gray-600">
-            {new Date(selectedDate).toLocaleDateString('zh-CN', {
-              weekday: 'long'
-            })}
-            · 共 {activities.length} 条记录
+            {new Date(selectedDate).toLocaleDateString(
+              t('timeline.totalRecords') ? undefined : 'zh-CN',
+              { weekday: 'long' }
+            )}
+            · {t('timeline.totalRecords')} {activities.length} {t('timeline.recordsUnit')}
           </p>
         </div>
 
@@ -163,7 +166,7 @@ export default function Timeline() {
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                           getCategoryColor(activity.category)
                         }`}>
-                          {activity.category}
+                          {t(`dashboard.categories.${activity.category}`)}
                         </span>
                       )}
                     </div>
@@ -187,7 +190,7 @@ export default function Timeline() {
                       <div className="mt-2">
                         <div className="flex items-center gap-2">
                           <span className="text-xs text-gray-500">
-                            置信度: {activity.confidence}%
+                            {t('timeline.confidence')} {activity.confidence}%
                           </span>
                           <div className="flex-1 bg-gray-200 rounded-full h-1.5 max-w-xs">
                             <div
@@ -211,9 +214,9 @@ export default function Timeline() {
           </div>
         ) : (
           <div className="bg-white rounded-lg shadow p-12 text-center">
-            <p className="text-gray-400 text-lg mb-2">📭 暂无活动记录</p>
+            <p className="text-gray-400 text-lg mb-2">{t('timeline.noActivities')}</p>
             <p className="text-gray-500 text-sm">
-              系统正在监控中，请稍后刷新页面
+              {t('timeline.systemMonitoring')}
             </p>
           </div>
         )}

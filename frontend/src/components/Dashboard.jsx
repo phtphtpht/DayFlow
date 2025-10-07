@@ -5,8 +5,10 @@
 
 import { useState, useEffect } from 'react';
 import api from '../services/api';
+import { useLanguage } from '../contexts/LanguageContext';
 
 export default function Dashboard() {
+  const { t } = useLanguage();
   const [stats, setStats] = useState(null);
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -42,7 +44,7 @@ export default function Dashboard() {
       setStats(statsData);
       setSummary(summaryData);
     } catch (err) {
-      setError('加载数据失败，请确保后端服务已启动');
+      setError(t('dashboard.loadFailed'));
       console.error(err);
     } finally {
       setLoading(false);
@@ -61,9 +63,8 @@ export default function Dashboard() {
         summary_text: result.summary_text,
         generated_at: new Date().toISOString()
       });
-      alert('摘要生成成功！');
     } catch (err) {
-      setError('生成摘要失败');
+      setError(err.message || 'Failed to generate summary');
       console.error(err);
     } finally {
       setGenerating(false);
@@ -75,7 +76,7 @@ export default function Dashboard() {
       <div className="flex items-center justify-center h-screen">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          <p className="text-gray-600">加载中...</p>
+          <p className="text-gray-600">{t('dashboard.loading')}</p>
         </div>
       </div>
     );
@@ -90,7 +91,7 @@ export default function Dashboard() {
             onClick={loadData}
             className="mt-4 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
           >
-            重试
+            {t('dashboard.retry')}
           </button>
         </div>
       </div>
@@ -104,8 +105,8 @@ export default function Dashboard() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-            <p className="text-gray-700">正在生成摘要...</p>
-            <p className="text-sm text-gray-500 mt-2">这可能需要10-30秒</p>
+            <p className="text-gray-700">{t('dashboard.generatingSummary')}</p>
+            <p className="text-sm text-gray-500 mt-2">{t('dashboard.mayTakeTime')}</p>
           </div>
         </div>
       )}
@@ -114,7 +115,7 @@ export default function Dashboard() {
         <div className="max-w-6xl mx-auto">
         {/* 日期选择器 */}
         <div className="mb-6 flex items-center gap-4">
-          <label className="text-gray-700 font-medium">选择日期：</label>
+          <label className="text-gray-700 font-medium">{t('dashboard.selectDate')}</label>
           <input
             type="date"
             value={selectedDate}
@@ -135,7 +136,7 @@ export default function Dashboard() {
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-500 text-sm mb-1">总记录数</p>
+                <p className="text-gray-500 text-sm mb-1">{t('dashboard.totalRecords')}</p>
                 <p className="text-3xl font-bold text-blue-600">
                   {stats?.total_records || 0}
                 </p>
@@ -148,7 +149,7 @@ export default function Dashboard() {
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-500 text-sm mb-1">已分析</p>
+                <p className="text-gray-500 text-sm mb-1">{t('dashboard.analyzedRecords')}</p>
                 <p className="text-3xl font-bold text-green-600">
                   {stats?.analyzed_records || 0}
                 </p>
@@ -161,12 +162,12 @@ export default function Dashboard() {
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-500 text-sm mb-1">工作时长</p>
+                <p className="text-gray-500 text-sm mb-1">{t('dashboard.workHours')}</p>
                 <p className="text-3xl font-bold text-purple-600">
                   {(() => {
                     const hours = Math.floor(stats?.work_hours || 0);
                     const minutes = Math.round(((stats?.work_hours || 0) - hours) * 60);
-                    return `${hours}h ${minutes}min`;
+                    return `${hours}${t('common.hours')} ${minutes}${t('common.minutes')}`;
                   })()}
                 </p>
               </div>
@@ -180,31 +181,20 @@ export default function Dashboard() {
          Object.keys(stats.category_distribution).length > 0 && (
           <div className="bg-white rounded-lg shadow p-6 mb-8">
             <h2 className="text-xl font-bold text-gray-800 mb-4">
-              📊 工作类型分布
+              {t('dashboard.categoryDistribution')}
             </h2>
             <div className="space-y-3">
               {Object.entries(stats.category_distribution).map(([category, count]) => {
                 const percentage = (count / stats.analyzed_records * 100).toFixed(1);
-                const categoryNames = {
-                  coding: '💻 编程',
-                  writing: '✍️ 写作',
-                  meeting: '👥 会议',
-                  browsing: '🌐 浏览',
-                  communication: '💬 沟通',
-                  entertainment: '🎮 娱乐',
-                  design: '🎨 设计',
-                  data_analysis: '📈 数据分析',
-                  other: '📌 其他'
-                };
 
                 return (
                   <div key={category}>
                     <div className="flex justify-between text-sm mb-1">
                       <span className="text-gray-700">
-                        {categoryNames[category] || category}
+                        {t(`dashboard.categories.${category}`)}
                       </span>
                       <span className="text-gray-500">
-                        {count}次 ({percentage}%)
+                        {count}{t('common.times')} ({percentage}%)
                       </span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
@@ -224,7 +214,7 @@ export default function Dashboard() {
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-bold text-gray-800">
-              📄 今日工作日志
+              {t('dashboard.dailyLog')}
             </h2>
             <button
               onClick={handleGenerateSummary}
@@ -235,7 +225,7 @@ export default function Dashboard() {
                   : 'bg-blue-500 text-white hover:bg-blue-600'
               }`}
             >
-              {generating ? '生成中...' : '🔄 生成摘要'}
+              {generating ? t('dashboard.generating') : t('dashboard.generateSummary')}
             </button>
           </div>
 
@@ -247,19 +237,19 @@ export default function Dashboard() {
                 </p>
               </div>
               <p className="text-sm text-gray-500">
-                生成时间: {new Date(summary.generated_at).toLocaleString('zh-CN')}
+                {t('dashboard.generatedAt')} {new Date(summary.generated_at).toLocaleString('zh-CN')}
               </p>
             </div>
           ) : (
             <div className="text-center py-12">
-              <p className="text-gray-400 mb-4">📭 暂无工作日志</p>
+              <p className="text-gray-400 mb-4">{t('dashboard.noSummary')}</p>
               {(stats?.analyzed_records || 0) > 0 ? (
                 <p className="text-sm text-gray-500">
-                  点击"生成摘要"按钮创建今日工作日志
+                  {t('dashboard.clickToGenerate')}
                 </p>
               ) : (
                 <p className="text-sm text-gray-500">
-                  暂无已分析的活动记录，请稍后再试
+                  {t('dashboard.noAnalyzed')}
                 </p>
               )}
             </div>

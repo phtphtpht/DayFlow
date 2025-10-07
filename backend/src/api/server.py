@@ -23,6 +23,7 @@ from src.database.db import (
 )
 from src.database.models import Activity, DailySummary
 from src.ai.summarizer import generate_daily_summary
+from src.utils.config import get_config, save_config
 
 # 创建 FastAPI 应用
 app = FastAPI(
@@ -335,6 +336,39 @@ def get_stats(date: Optional[str] = None):
         work_hours=work_hours,
         category_distribution=category_dist
     )
+
+
+@app.get("/api/settings")
+def get_settings():
+    """获取用户设置"""
+    config = get_config()
+    return {
+        "language": config.get("language", "en"),
+        "openai_model": config.get("openai_model", "gpt-4o-mini")
+    }
+
+
+@app.post("/api/settings")
+def update_settings(settings: dict):
+    """更新用户设置"""
+    try:
+        config = get_config()
+
+        # 更新配置
+        if 'language' in settings:
+            config['language'] = settings['language']
+        if 'openai_model' in settings:
+            config['openai_model'] = settings['openai_model']
+
+        save_config(config)
+
+        return {
+            "success": True,
+            "message": "Settings updated successfully",
+            "settings": config
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # ============ 启动配置 ============

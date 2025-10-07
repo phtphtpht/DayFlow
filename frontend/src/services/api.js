@@ -94,6 +94,22 @@ const api = {
     const url = date ? `/api/stats?date=${date}` : '/api/stats/today';
     return request(url);
   },
+
+  // ========== 设置相关 ==========
+
+  /**
+   * 获取用户设置
+   */
+  getSettings: () => request('/api/settings'),
+
+  /**
+   * 更新用户设置
+   * @param {object} settings - 设置对象
+   */
+  updateSettings: (settings) => request('/api/settings', {
+    method: 'POST',
+    body: JSON.stringify(settings)
+  }),
 };
 
 export default api;

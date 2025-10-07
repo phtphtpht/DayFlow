@@ -154,5 +154,6 @@ if __name__ == "__main__":
     print("启动 AIWorkTracker 监控器...")
     print("按 Ctrl+C 停止监控\n")
 
-    monitor = WorkMonitor(test_mode=True)  # 测试模式：10秒间隔
+    # monitor = WorkMonitor(test_mode=True)  # 测试模式：10秒间隔
+    monitor = WorkMonitor() 
     monitor.start()

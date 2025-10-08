@@ -9,7 +9,7 @@ import threading
 from datetime import datetime
 
 from .screenshot import take_screenshot
-from .tracker import get_active_window
+from .tracker import get_active_window, is_system_locked_or_sleeping
 from .sampler import SmartSampler
 from ..database.db import init_db, save_activity
 from ..ai.analyzer import analyze_screenshot
@@ -76,6 +76,11 @@ class WorkMonitor:
         获取窗口信息 -> 判断是否截图 -> 执行截图
         """
         try:
+            # 0. 检测系统是否锁屏或睡眠
+            if is_system_locked_or_sleeping():
+                logger.debug("系统已锁屏或睡眠，跳过监控")
+                return
+
             # 1. 获取当前活跃窗口信息
             window_info = get_active_window()
             current_app = window_info["app_name"]

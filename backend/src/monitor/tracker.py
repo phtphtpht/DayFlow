@@ -1,6 +1,7 @@
 """
 窗口追踪模块
 负责获取当前活跃的应用和窗口标题
+支持检测系统锁屏和睡眠状态
 """
 
 import logging
@@ -131,6 +132,93 @@ def _get_active_window_linux() -> Dict[str, str]:
     """
     logger.warning("Linux 平台支持暂未实现，返回模拟数据")
     return {"app_name": "LinuxApp", "title": "Linux Window"}
+
+
+def is_system_locked_or_sleeping() -> bool:
+    """
+    检测系统是否处于锁屏或睡眠状态
+
+    Returns:
+        bool: True 表示系统已锁屏或睡眠，False 表示正常活跃状态
+    """
+    system = platform.system()
+
+    try:
+        if system == "Darwin":  # macOS
+            return _is_locked_macos()
+        elif system == "Windows":
+            return _is_locked_windows()
+        elif system == "Linux":
+            return _is_locked_linux()
+        else:
+            logger.warning(f"不支持的操作系统: {system}")
+            return False
+
+    except Exception as e:
+        logger.error(f"检测系统锁屏状态失败: {e}")
+        return False
+
+
+def _is_locked_macos() -> bool:
+    """
+    检测 macOS 系统是否锁屏
+
+    使用 Quartz.CGSessionCopyCurrentDictionary() 检测
+    当屏幕锁定时，字典中会包含 'CGSSessionScreenIsLocked' 键
+
+    Returns:
+        bool: True 表示已锁屏，False 表示未锁屏
+    """
+    try:
+        from Quartz import CGSessionCopyCurrentDictionary
+
+        session_dict = CGSessionCopyCurrentDictionary()
+
+        # 如果返回 None（例如 SSH 会话），假定为未锁屏
+        if session_dict is None:
+            return False
+
+        # 检查是否包含锁屏标志
+        is_locked = session_dict.get("CGSSessionScreenIsLocked", 0) == 1
+
+        if is_locked:
+            logger.debug("系统已锁屏")
+        return is_locked
+
+    except ImportError as e:
+        logger.error(f"macOS Quartz 库未安装: {e}")
+        return False
+    except Exception as e:
+        logger.error(f"检测 macOS 锁屏状态失败: {e}")
+        return False
+
+
+def _is_locked_windows() -> bool:
+    """
+    检测 Windows 系统是否锁屏
+
+    TODO: 实现 Windows 锁屏检测
+    可以使用 ctypes 调用 Windows API
+
+    Returns:
+        bool: True 表示已锁屏，False 表示未锁屏
+    """
+    logger.warning("Windows 锁屏检测暂未实现")
+    return False
+
+
+def _is_locked_linux() -> bool:
+    """
+    检测 Linux 系统是否锁屏
+
+    TODO: 实现 Linux 锁屏检测
+    不同桌面环境（GNOME, KDE, etc.）需要不同的方法
+
+    Returns:
+        bool: True 表示已锁屏，False 表示未锁屏
+    """
+    logger.warning("Linux 锁屏检测暂未实现")
+    return False
 
 
 if __name__ == "__main__":

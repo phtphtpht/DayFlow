@@ -1,4 +1,11 @@
 # AIWorkTracker
+前端运行
+
+``` npm run dev ```
+
+后端运行
+
+```conda activate aiworktracker && python3 -m src.main```
 
 自动监控电脑活动并通过 AI 生成工作日志的桌面应用。
 

@@ -67,18 +67,20 @@ export default function Dashboard({ selectedDate }: DashboardProps) {
   const dateString = selectedDate.toISOString().split('T')[0];
 
   useEffect(() => {
-    loadData();
+    loadData(true); // 初始加载显示 loading
 
-    // 每30秒自动刷新
+    // 每30秒静默刷新数据
     const interval = setInterval(() => {
-      loadData();
+      loadData(false); // 自动刷新不显示 loading
     }, 30000);
 
     return () => clearInterval(interval);
   }, [dateString]);
 
-  const loadData = async () => {
-    setLoading(true);
+  const loadData = async (showLoading = true) => {
+    if (showLoading) {
+      setLoading(true);
+    }
     setError(null);
 
     try {
@@ -93,7 +95,9 @@ export default function Dashboard({ selectedDate }: DashboardProps) {
       setError(t('dashboard.loadFailed'));
       console.error(err);
     } finally {
-      setLoading(false);
+      if (showLoading) {
+        setLoading(false);
+      }
     }
   };
 

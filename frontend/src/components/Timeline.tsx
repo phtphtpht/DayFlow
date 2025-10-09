@@ -109,18 +109,20 @@ export default function Timeline({ selectedDate }: TimelineProps) {
   const dateString = selectedDate.toISOString().split('T')[0];
 
   useEffect(() => {
-    loadActivities();
+    loadActivities(true); // 初始加载显示 loading
 
-    // 每30秒自动刷新
+    // 每30秒静默刷新数据
     const interval = setInterval(() => {
-      loadActivities();
+      loadActivities(false); // 自动刷新不显示 loading
     }, 30000);
 
     return () => clearInterval(interval);
   }, [dateString]);
 
-  const loadActivities = async () => {
-    setLoading(true);
+  const loadActivities = async (showLoading = true) => {
+    if (showLoading) {
+      setLoading(true);
+    }
     setError(null);
 
     try {
@@ -130,7 +132,9 @@ export default function Timeline({ selectedDate }: TimelineProps) {
       setError(t('timeline.loadFailed'));
       console.error(err);
     } finally {
-      setLoading(false);
+      if (showLoading) {
+        setLoading(false);
+      }
     }
   };
 

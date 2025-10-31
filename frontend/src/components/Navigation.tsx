@@ -18,9 +18,11 @@ export default function Navigation({ currentPage, onPageChange }: NavigationProp
       <div className="max-w-7xl mx-auto px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center shadow-lg">
-              <Clock className="w-6 h-6 text-white" />
-            </div>
+            <img
+              src="/logo.png"
+              alt="DayFlow Logo"
+              className="w-10 h-10 object-contain"
+            />
             <h1 className="text-2xl font-bold text-white">DayFlow</h1>
           </div>
 

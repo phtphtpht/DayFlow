@@ -1,13 +1,36 @@
-# DayFlow(AIWorkTracker)
-前端运行
+<div align="center">
+  <img src="logo.png" alt="DayFlow Logo" width="200"/>
 
-``` npm run dev ```
+  # DayFlow
 
-后端运行
+  **AI 驱动的工作活动追踪器**
 
-```conda activate aiworktracker && python3 -m src.main```
+  自动监控电脑活动并通过 AI 生成工作日志的桌面应用
 
-自动监控电脑活动并通过 AI 生成工作日志的桌面应用。
+  [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+</div>
+
+---
+## 效果展示
+
+<img src="images/1.png" width="500">
+<img src="images/2.png" width="500">
+<img src="images/3.png" width="500">
+<img src="images/4.png" width="500">
+
+
+
+## 快速启动
+
+**前端运行**
+```
+npm run dev
+```
+
+**后端运行**
+```
+conda activate aiworktracker && python3 -m src.main
+```
 
 ## 功能特性
 
